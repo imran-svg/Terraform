@@ -1,0 +1,74 @@
+---
+- hosts: kubernetes-master-nodes:kubernetes-worker-nodes
+  become: yes
+  roles:
+    - prerequisites
+    - install_k8s
+
+- hosts: kubernetes-master-nodes
+  become: yes
+  roles:
+    - configure_k8s_master
+
+- hosts: kubernetes-worker-nodes
+  become: yes
+  roles:
+    - attach_nodes
+
+- hosts: kubernetes-master-nodes
+  become: yes
+  roles:
+    - setup_nfs
+    - install_metrics_server
+    - ha_proxy
+    - helm_install
+    - setup_enclave_services
+    - setup_ssp_services
+    
+
+#   5. Configure the Master node
+# kubectl get pods --all-namespaces
+
+#   7. Wait until Nodes are in Ready state
+# kubectl get nodes -o wide
+
+#   8. Setup NFS Share
+# systemctl status nfs-server
+# kubectl get pods -n nfs-provisioner
+
+#   9. Install Metrics Server
+# kubectl get pods -n kube-system
+# kubectl get apiservices
+# kubectl top pods
+
+#   d. Setup Ingress
+# kubectl get pods -n ingress
+
+#   i. Setup Elastic Search & Kibana for Logging
+# kubectl get pvc -n logging
+# kubectl get pods -n logging
+
+#   ii. Setup Jaeger for Tracing
+# kubectl get pods -n tracing
+
+#   iii. Setup Prometheus and Grafana for Metrics
+# kubectl get pvc -n monitoring
+# kubectl get pods -n monitoring
+
+#   g. Setup SSP Services
+# kubectl get ingress -n ${NAMESPACE}
+# kubectl get nodes -n ${NAMESPACE}
+# kubectl get events -n ${NAMESPACE}
+# kubectl get pods,svc,ing -n ${NAMESPACE} -o wide
+
+# Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - app-network
